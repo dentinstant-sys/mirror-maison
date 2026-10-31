@@ -4,45 +4,89 @@ import { useCart } from '@/app/context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { abrirCheckoutBold } from '@/lib/bold';
+
+const DEPARTAMENTOS_COLOMBIA = [
+  'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar',
+  'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó',
+  'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira',
+  'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío',
+  'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima',
+  'Valle del Cauca', 'Vaupés', 'Vichada'
+];
 
 export default function CarritoPage() {
   const { cart, actualizarCantidad, removerDelCarrito, vaciarCarrito, totalCarrito } = useCart();
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const handleCheckoutBold = async () => {
-  if (cart.length === 0 || loading) return;
+  // Estado del formulario de cliente y envío
+  const [formData, setFormData] = useState({
+    nombreApellido: '',
+    celular: '',
+    correo: '',
+    departamento: '',
+    ciudad: '',
+    direccion: '',
+    indicaciones: '',
+    aceptaTiempo: false,
+    aceptaTerminos: false,
+    aceptaTratamientoDatos: false,
+    esMayorEdad: false,
+  });
 
-  try {
-    setLoading(true);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
-    const res = await fetch('/api/checkout/bold', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        totalCarrito,
-        orderId: `MM-${Date.now()}`,
-      }),
-    });
+  const handleProcederCheckout = () => {
+    if (cart.length === 0) return;
+    setModalOpen(true);
+  };
 
-    const cobro = await res.json();
+  const handlePagarBold = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    if (!res.ok) {
-      alert(cobro.error || 'Ocurrió un error al generar la orden de pago.');
+    if (!formData.aceptaTiempo || !formData.aceptaTerminos || !formData.aceptaTratamientoDatos || !formData.esMayorEdad) {
+      alert('Debes aceptar todos los términos y declaraciones antes de continuar con el pago.');
       return;
     }
 
-    const resultado = await abrirCheckoutBold(cobro);
-    if (resultado === 'no_abrio') {
-      alert('No se pudo abrir el checkout de Bold. Intenta de nuevo.');
+    try {
+      setLoading(true);
+
+      const res = await fetch('/api/checkout/bold', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          totalCarrito: totalCarrito,
+          orderId: `MM-${Date.now()}`,
+          cliente: formData,
+          items: cart,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Ocurrió un error al generar la orden de pago.');
+      }
+    } catch (error) {
+      console.error('Error al iniciar el pago:', error);
+      alert('No se pudo conectar con el servidor de pagos.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error al iniciar el pago:', error);
-    alert('No se pudo conectar con el servidor de pagos.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <main className="w-full bg-[#FAF9F6] min-h-screen pt-28 pb-24 px-6 text-[#111111]">
@@ -75,7 +119,7 @@ export default function CarritoPage() {
               Explora nuestra colección editorial de espejos de alta gama y añade tus piezas preferidas.
             </p>
             <Link
-              href="/categoria/organicos"
+              href="/"
               className="inline-block bg-[#111111] text-[#FAF9F6] py-4 px-8 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#8C8275] transition-colors"
             >
               Explorar Colección
@@ -102,13 +146,13 @@ export default function CarritoPage() {
               <div className="divide-y divide-[#EAE7E1]">
                 {cart.map((item) => (
                   <div key={item.id} className="py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                    
                     <div className="flex items-center gap-4 flex-1">
                       <div className="relative h-24 w-20 sm:h-28 sm:w-22 rounded-xl overflow-hidden bg-[#F2F0EB] flex-shrink-0 border border-[#EAE7E1]">
                         <Image
                           src={item.imagen}
                           alt={item.nombre}
                           fill
+                          sizes="(max-width: 768px) 80px, 100px"
                           className="object-cover"
                         />
                       </div>
@@ -123,14 +167,12 @@ export default function CarritoPage() {
                       </div>
                     </div>
 
-                    {/* CONTROLES DE CANTIDAD */}
                     <div className="flex items-center justify-between w-full sm:w-auto gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#EAE7E1]">
                       <div className="flex items-center">
                         <button
                           type="button"
                           onClick={() => actualizarCantidad(item.id, item.cantidad - 1)}
                           className="w-8 h-8 rounded-lg bg-white border border-[#EAE7E1] text-[#111111] font-bold hover:bg-[#FAF9F6] flex items-center justify-center transition-colors text-xs cursor-pointer"
-                          aria-label="Disminuir cantidad"
                         >
                           -
                         </button>
@@ -141,13 +183,11 @@ export default function CarritoPage() {
                           type="button"
                           onClick={() => actualizarCantidad(item.id, item.cantidad + 1)}
                           className="w-8 h-8 rounded-lg bg-white border border-[#EAE7E1] text-[#111111] font-bold hover:bg-[#FAF9F6] flex items-center justify-center transition-colors text-xs cursor-pointer"
-                          aria-label="Aumentar cantidad"
                         >
                           +
                         </button>
                       </div>
 
-                      {/* SUB-TOTAL Y REMOVER */}
                       <div className="text-right min-w-[110px]">
                         <p className="font-serif text-base font-bold text-[#111111]">
                           ${(item.precio * item.cantidad).toLocaleString('es-CO')} COP
@@ -160,13 +200,12 @@ export default function CarritoPage() {
                         </button>
                       </div>
                     </div>
-
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* CHECKOUT BOLD */}
+            {/* RESUMEN DE COMPRA */}
             <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-[#EAE7E1] shadow-sm space-y-6 h-fit">
               <h2 className="font-serif text-xl text-[#111111] border-b border-[#EAE7E1] pb-4 uppercase tracking-wide">
                 Resumen de Compra
@@ -190,11 +229,10 @@ export default function CarritoPage() {
 
               <button
                 type="button"
-                onClick={handleCheckoutBold}
-                disabled={loading}
-                className="w-full bg-[#111111] text-[#FAF9F6] hover:bg-[#8C8275] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                onClick={handleProcederCheckout}
+                className="w-full bg-[#111111] text-[#FAF9F6] hover:bg-[#8C8275] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2"
               >
-                <span>{loading ? 'PROCESANDO...' : 'PROCEDER AL PAGO'}</span>
+                <span>PROCEDER AL PAGO</span>
               </button>
             </div>
 
@@ -202,6 +240,233 @@ export default function CarritoPage() {
         )}
 
       </div>
+
+      {/* MODAL DE DATOS DE ENVÍO Y CONFIRMACIÓN */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[#FAF9F6] w-full max-w-2xl rounded-2xl p-6 md:p-8 shadow-2xl border border-[#EAE7E1] my-8 relative max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex justify-between items-center border-b border-[#EAE7E1] pb-4 mb-6">
+              <div>
+                <span className="text-[10px] font-sans tracking-[0.25em] uppercase text-[#8C8275] block">
+                  INFORMACIÓN DE DESPACHO
+                </span>
+                <h3 className="font-serif text-xl text-[#111111] uppercase tracking-wide">
+                  Datos de Entrega
+                </h3>
+              </div>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-xl font-light text-[#111111] hover:text-[#8C8275]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePagarBold} className="space-y-6 text-xs text-[#111111]">
+              
+              {/* ¿Quién lo recibe? */}
+              <div className="space-y-4">
+                <h4 className="font-semibold uppercase tracking-wider text-[#8C8275] border-b border-[#EAE7E1] pb-1">
+                  ¿Quién lo recibe?
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Nombre y apellido *</label>
+                    <input
+                      type="text"
+                      name="nombreApellido"
+                      required
+                      value={formData.nombreApellido}
+                      onChange={handleChange}
+                      placeholder="Ej. Juan Pérez"
+                      className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Celular con WhatsApp *</label>
+                    <input
+                      type="tel"
+                      name="celular"
+                      required
+                      value={formData.celular}
+                      onChange={handleChange}
+                      placeholder="Ej. 300 123 4567"
+                      className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                    />
+                    <p className="text-[10px] text-[#8C8275] mt-1">Para avisarte cómo va tu pedido.</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">Correo (opcional)</label>
+                  <input
+                    type="email"
+                    name="correo"
+                    value={formData.correo}
+                    onChange={handleChange}
+                    placeholder="correo@ejemplo.com"
+                    className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                  />
+                </div>
+              </div>
+
+              {/* ¿A dónde lo llevamos? */}
+              <div className="space-y-4 pt-2">
+                <h4 className="font-semibold uppercase tracking-wider text-[#8C8275] border-b border-[#EAE7E1] pb-1">
+                  ¿A dónde lo llevamos?
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1 font-medium">Departamento *</label>
+                    <select
+                      name="departamento"
+                      required
+                      value={formData.departamento}
+                      onChange={handleChange}
+                      className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                    >
+                      <option value="">Escoge uno</option>
+                      {DEPARTAMENTOS_COLOMBIA.map((dep) => (
+                        <option key={dep} value={dep}>{dep}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-1 font-medium">Ciudad *</label>
+                    <input
+                      type="text"
+                      name="ciudad"
+                      required
+                      value={formData.ciudad}
+                      onChange={handleChange}
+                      placeholder="Ej. Medellín / Bogotá"
+                      className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">Dirección *</label>
+                  <input
+                    type="text"
+                    name="direccion"
+                    required
+                    value={formData.direccion}
+                    onChange={handleChange}
+                    placeholder="Ej. Cra 43A # 1-50 Apt 301"
+                    className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-medium">Indicaciones para llegar (si hace falta)</label>
+                  <textarea
+                    name="indicaciones"
+                    rows={2}
+                    value={formData.indicaciones}
+                    onChange={handleChange}
+                    placeholder="Ej. Dejar en Portería, conjunto residencial los Pinos"
+                    className="w-full p-3 bg-white border border-[#EAE7E1] rounded-lg focus:outline-none focus:border-[#111111]"
+                  />
+                </div>
+              </div>
+
+            {/* Antes de pagar */}
+<div className="space-y-3 pt-2 bg-[#F2F0EB] p-4 rounded-xl border border-[#EAE7E1]">
+  <h4 className="font-semibold uppercase tracking-wider text-[#111111] mb-2">
+    Antes de pagar
+  </h4>
+
+  <label className="flex items-start gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      name="aceptaTiempo"
+      required
+      checked={formData.aceptaTiempo}
+      onChange={handleChange}
+      className="mt-0.5 accent-[#111111]"
+    />
+    <span>Entiendo y acepto que mi pedido llega en 15 días desde mi anticipo.</span>
+  </label>
+
+  <label className="flex items-start gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      name="aceptaTerminos"
+      required
+      checked={formData.aceptaTerminos}
+      onChange={handleChange}
+      className="mt-0.5 accent-[#111111]"
+    />
+    <span>
+      Leí y acepto los{' '}
+      <Link
+        href="/terminos-y-condiciones"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline font-semibold hover:text-[#8C8275] transition-colors"
+      >
+        términos y condiciones
+      </Link>
+      .
+    </span>
+  </label>
+
+  <label className="flex items-start gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      name="aceptaTratamientoDatos"
+      required
+      checked={formData.aceptaTratamientoDatos}
+      onChange={handleChange}
+      className="mt-0.5 accent-[#111111]"
+    />
+    <span>
+      Autorizo el tratamiento de mis datos para gestionar mi pedido, según la{' '}
+      <Link
+        href="/politica-de-datos"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline font-semibold hover:text-[#8C8275] transition-colors"
+      >
+        política de datos personales
+      </Link>
+      .
+    </span>
+  </label>
+
+  <label className="flex items-start gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      name="esMayorEdad"
+      required
+      checked={formData.esMayorEdad}
+      onChange={handleChange}
+      className="mt-0.5 accent-[#111111]"
+    />
+    <span>Soy mayor de edad.</span>
+  </label>
+</div>
+
+              {/* BOTÓN FINAL DE PAGO */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#111111] text-[#FAF9F6] hover:bg-[#8C8275] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span>{loading ? 'PROCESANDO PAGO...' : `PAGAR $${totalCarrito.toLocaleString('es-CO')} COP`}</span>
+              </button>
+
+            </form>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

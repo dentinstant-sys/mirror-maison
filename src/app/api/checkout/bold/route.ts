@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
-    const { totalCarrito, orderId } = await request.json();
+    const { totalCarrito, orderId, cliente, items } = await request.json();
 
     if (!totalCarrito || totalCarrito <= 0) {
       return NextResponse.json({ error: 'El monto no es válido' }, { status: 400 });
@@ -13,36 +13,54 @@ export async function POST(request: Request) {
     const secretKey = process.env.BOLD_INTEGRITY_SECRET?.trim();
 
     if (!apiKey || !secretKey) {
-      console.error('Faltan BOLD_API_KEY o BOLD_INTEGRITY_SECRET en .env.local');
-      return NextResponse.json({ error: 'Configuración de pago incompleta' }, { status: 500 });
+      console.error('Error: Faltan credenciales de Bold en .env.local');
+      return NextResponse.json({ error: 'Error de configuración de pago' }, { status: 500 });
     }
-console.log('Bold apiKey longitud:', apiKey.length, '| secret longitud:', secretKey.length);
-    const referencia: string = orderId || `MM-${Date.now()}`;
-    const monto = Math.round(totalCarrito);
-    const moneda = 'COP';
 
-    // SHA-256 de: referencia + monto + moneda + llave secreta
-    const firmaIntegridad = crypto
+    const reference = orderId || `MM-${Date.now()}`;
+    const amount = Math.round(totalCarrito);
+    const currency = 'COP';
+
+    // Firma SHA-256
+    const stringToHash = `${reference}${amount}${currency}${secretKey}`;
+    const integritySignature = crypto
       .createHash('sha256')
-      .update(`${referencia}${monto}${moneda}${process.env.BOLD_INTEGRITY_SECRET!.trim()}`)
+      .update(stringToHash)
       .digest('hex');
 
-    const origen = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
-    const expiraEn = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    // Aquí puedes opcionalmente guardar la orden pendiente en Firestore si lo deseas
 
-    return NextResponse.json({
-      referencia,
-      moneda,
-      monto,
-      llaveIdentidad: apiKey,
-      firmaIntegridad,
-      descripcion: 'Compra en Maison Miroir',
-      urlRetorno: `${origen}/pago/resultado`,
-      modoApertura: 'embedded',
-      expiraEn: expiraEn.toISOString(),
+    const response = await fetch('https://integrations.api.bold.co/online/link/v1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        description: `Compra Maison Miroir - ${cliente?.nombreApellido || 'Cliente'}`,
+        reference: reference,
+        amount: amount,
+        currency: currency,
+        integrity_signature: integritySignature,
+        redirection_url: 'http://localhost:3001/',
+      }),
     });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Error Bold API:', data);
+      return NextResponse.json(
+        { error: data.message || 'Error al conectar con Bold' },
+        { status: response.status }
+      );
+    }
+
+    const checkoutUrl = data.payload?.url || data.url;
+    return NextResponse.json({ url: checkoutUrl });
+
   } catch (error) {
     console.error('Error interno en checkout Bold:', error);
-    return NextResponse.json({ error: 'Error interno en la solicitud de pago' }, { status: 500 });
+    return NextResponse.json({ error: 'Error procesando la solicitud' }, { status: 500 });
   }
 }
