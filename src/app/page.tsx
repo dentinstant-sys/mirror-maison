@@ -71,7 +71,7 @@ useEffect(() => {
       {/* 1. HERO BANNER PRINCIPAL EDITORIAL */}
       <section className="relative w-full h-[85vh] bg-[#EAE7E1] flex items-end pb-16 px-6 md:px-16">
         <Image
-          src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FInterior%20minimalista%20con%20espejo%20orga%CC%81nico%20y%20lujo%20ca%CC%81lido.png?alt=media&token=c0bd7381-790a-41d3-972e-59e26d236533"
+          src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FGemini_Generated_Image_yekgghyekgghyekg.webp?alt=media&token=b407110b-a223-4d00-b2f3-2b44278b1acb"
           alt="Colección Espejos de Diseño"
           fill
           className="object-cover brightness-95"
@@ -99,6 +99,7 @@ useEffect(() => {
       </section>
 
       {/* 2. CATEGORÍAS EN RETÍCULA MINIMALISTA */}
+      
       <section className="max-w-7xl mx-auto py-24 px-6 space-y-12">
         <header className="text-center space-y-2">
           <span className="text-[10px] uppercase tracking-[0.3em] text-[#8C8275] block">CATEGORÍAS</span>
@@ -109,13 +110,15 @@ useEffect(() => {
           
           <Link href="/categoria/organicos" className="group space-y-4">
             <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
+              
               <Image
-                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura%20de%20pantalla%202026-10-31%20a%20la(s)%2012.08.21%E2%80%AFp.m..png?alt=media&token=1f3d91e5-1b2c-42a5-a4bb-ac54a602fc45"
+                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura-de-pantalla-2026-10-31-a-la_s_-12.08.21%E2%80%AFp.m..webp?alt=media&token=da715427-f14e-4f56-b474-7bb9600be70b"
                 alt="Espejos Orgánicos"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
+
             <div className="text-center space-y-1">
               <h3 className="font-serif text-lg text-[#111111]">Formas Orgánicas</h3>
               <p className="text-[11px] uppercase tracking-widest text-[#8C8275]">Curvas Fluidas</p>
@@ -125,7 +128,7 @@ useEffect(() => {
           <Link href="/categoria/arqueados" className="group space-y-4">
             <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
               <Image
-                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura%20de%20pantalla%202026-10-31%20a%20la(s)%2012.08.33%E2%80%AFp.m..png?alt=media&token=cd897151-a3bf-408d-bb33-6aa70f320b9d"
+                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura-de-pantalla-2026-10-31-a-la_s_-12.08.33%E2%80%AFp.m..webp?alt=media&token=46d799ed-886e-4157-9eb8-cc39aa90dd07"
                 alt="Espejos Arqueados"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -140,7 +143,7 @@ useEffect(() => {
           <Link href="/categoria/pie" className="group space-y-4">
             <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
               <Image
-                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura%20de%20pantalla%202026-10-31%20a%20la(s)%2012.08.46%E2%80%AFp.m..png?alt=media&token=11572838-7e14-4f8e-80dc-9fed3140b0ca"
+                src="https://firebasestorage.googleapis.com/v0/b/maison-mirror-1ab5b.firebasestorage.app/o/espejos%2FCaptura-de-pantalla-2026-10-31-a-la_s_-12.08.46%E2%80%AFp.m..webp?alt=media&token=62b955f2-71ee-4364-b13c-eabf37231bb0"
                 alt="Espejos de Pie"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
