@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       console.error('Faltan BOLD_API_KEY o BOLD_INTEGRITY_SECRET en .env.local');
       return NextResponse.json({ error: 'Configuración de pago incompleta' }, { status: 500 });
     }
-
+console.log('Bold apiKey longitud:', apiKey.length, '| secret longitud:', secretKey.length);
     const referencia: string = orderId || `MM-${Date.now()}`;
     const monto = Math.round(totalCarrito);
     const moneda = 'COP';
