@@ -1,6 +1,6 @@
 env:
   - variable: BOLD_API_KEY
-    value: PEGA_AQUI_TU_LLAVE_DE_IDENTIDAD
+    value: VEW5VyjrdTMVhZaWlPPCvEQChyhShW9SVzWfCrtPz8g
   - variable: BOLD_INTEGRITY_SECRET
     secret: BOLD_INTEGRITY_SECRET
   - variable: NEXT_PUBLIC_SITE_URL
