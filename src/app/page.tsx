@@ -42,7 +42,7 @@ useEffect(() => {
       // Asegúrate de NO tener limit(6) aquí
       const querySnapshot = await getDocs(collection(db, 'productos'));
       
-      const lista: EspejoProducto[] = [];
+      const lista: Espejo[] = [];
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         lista.push({
