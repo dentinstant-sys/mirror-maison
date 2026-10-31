@@ -1,0 +1,12 @@
+env:
+  - variable: VEW5VyjrdTMVhZaWlPPCvEQChyhShW9SVzWfCrtPz8g
+    secret: 6HNXqTrupIFo9uMM_g6emw
+  - variable: BOLD_INTEGRITY_SECRET
+    secret: BOLD_INTEGRITY_SECRET
+  - variable: NEXT_PUBLIC_SITE_URL
+    value: https://mirror-maison--maison-mirror-1ab5b.us-east4.hosted.app/
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: BOLD_API_KEY
+    secret: BOLD_API_KEY
