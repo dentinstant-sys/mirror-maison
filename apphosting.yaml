@@ -7,7 +7,7 @@ runConfig:
   memoryMiB: 1024
 
 build:
-  installCommand: npm install --legacy-peer-deps
+  installCommand: npm install
   buildCommand: npm run build
 
 env:
@@ -16,13 +16,11 @@ env:
     availability:
       - BUILD
       - RUNTIME
-
   - variable: BOLD_INTEGRITY_SECRET
     secret: BOLD_INTEGRITY_SECRET
     availability:
       - BUILD
       - RUNTIME
-
   - variable: NEXT_PUBLIC_SITE_URL
     value: https://mirror-maison--maison-mirror-1ab5b.us-east4.hosted.app
     availability:
