@@ -6,6 +6,10 @@ runConfig:
   cpu: 1
   memoryMiB: 1024
 
+build:
+  installCommand: npm install --legacy-peer-deps
+  buildCommand: npm run build
+
 env:
   - variable: BOLD_API_KEY
     value: VEW5VyjrdTMVhZaWlPPCvEQChyhShW9SVzWfCrtPz8g
