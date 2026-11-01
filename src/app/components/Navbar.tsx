@@ -25,7 +25,7 @@ export default function Navbar() {
         {/* LOGOTIPO EDITORIAL */}
         <Link href="/" className="text-center">
           <span className="font-serif text-xl md:text-2xl tracking-[0.3em] font-semibold text-[#111111] uppercase block">
-            Maison Miroir
+            Decoespejos
           </span>
           <span className="text-[9px] tracking-[0.4em] text-[#8C8275] uppercase block -mt-1 font-sans">
             Espejos & Colección

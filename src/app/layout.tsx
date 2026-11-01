@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { CartProvider } from '../app/context/CartContext';
+import WhatsAppButton from "./components/WhatsAppButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +30,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Acomódate Muebles",
-  description: "Hecho para acomodarse a ti",
+  title: "Decoespejos",
+  description: "Espejos de lujo",
 };
 
 export default function RootLayout({
@@ -51,7 +52,7 @@ export default function RootLayout({
         <main className="flex-grow">
          
           {children}
-         
+         <WhatsAppButton />
         </main>
         <Footer/> </CartProvider>
       </body>

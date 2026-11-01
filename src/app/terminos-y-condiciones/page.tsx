@@ -10,7 +10,7 @@ export default function TerminosYCondicionesPage() {
         {/* ENCABEZADO */}
         <header className="border-b border-[#EAE7E1] pb-8 space-y-2">
           <span className="text-[10px] font-sans tracking-[0.3em] uppercase text-[#8C8275] font-medium block">
-            MAISON MIROIR
+            DECOESPEJOS
           </span>
           <h1 className="font-serif text-3xl md:text-4xl text-[#111111] uppercase tracking-wide">
             Términos y Condiciones
@@ -28,7 +28,7 @@ export default function TerminosYCondicionesPage() {
               1. Generalidades
             </h2>
             <p>
-              Estos términos regulan las compras hechas en <strong>maisonmiroir.co</strong> (el &quot;sitio&quot;), la tienda en línea de espejos y piezas de alta gama de Maison Miroir. Al marcar la casilla &quot;Leí y acepto los términos y condiciones&quot; en la página de pago o en el carrito, aceptas esta versión del texto, que queda registrada junto con tu pedido.
+              Estos términos regulan las compras hechas en <strong>decoespejos.co</strong> (el &quot;sitio&quot;), la tienda en línea de espejos y piezas de alta gama de Decoespejos. Al marcar la casilla &quot;Leí y acepto los términos y condiciones&quot; en la página de pago o en el carrito, aceptas esta versión del texto, que queda registrada junto con tu pedido.
             </p>
           </section>
 
@@ -37,7 +37,7 @@ export default function TerminosYCondicionesPage() {
               2. Quién vende
             </h2>
             <p>
-              Maison Miroir [puedes incluir NIT o datos si aplica]. Dirección de notificación: [Ciudad, Colombia]. Atención por WhatsApp desde cualquier página del sitio, o a través de nuestros canales oficiales de soporte.
+              Decoespejos [puedes incluir NIT o datos si aplica]. Dirección de notificación: [Ciudad, Colombia]. Atención por WhatsApp desde cualquier página del sitio, o a través de nuestros canales oficiales de soporte.
             </p>
           </section>
 
@@ -59,7 +59,7 @@ export default function TerminosYCondicionesPage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>Los precios están expresados en pesos colombianos (COP) e incluyen los impuestos aplicables. El valor válido es el reflejado en la pasarela de pago al momento de confirmar la transacción.</li>
-              <li>El pago en línea es procesado de forma segura por Bold (tarjeta de crédito, PSE, Nequi, etc.). Maison Miroir no almacena información financiera ni datos sensibles de tus tarjetas o cuentas bancarias.</li>
+              <li>El pago en línea es procesado de forma segura por Bold (tarjeta de crédito, PSE, Nequi, etc.). Decoespejos no almacena información financiera ni datos sensibles de tus tarjetas o cuentas bancarias.</li>
             </ul>
           </section>
 

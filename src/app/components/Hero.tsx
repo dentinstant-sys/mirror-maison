@@ -7,7 +7,7 @@ export default function Hero() {
       <div className="absolute inset-0 z-0">
         <Image 
           src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000&auto=format&fit=crop" 
-          alt="Acomódate Muebles - Sala de estar contemporánea" 
+          alt="Decoespejos - Espejos de lujo" 
           fill
           priority
           className="object-cover object-center opacity-90 scale-105 transition-transform duration-1000"

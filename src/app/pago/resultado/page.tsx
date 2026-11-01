@@ -19,7 +19,7 @@ function Contenido() {
   return (
     <main className="min-h-screen bg-[#FAF9F6] flex items-center justify-center px-6">
       <div className="bg-white border border-[#EAE7E1] rounded-2xl p-12 text-center max-w-lg space-y-6">
-        <h1 className="font-serif text-2xl uppercase tracking-wide text-[#111111]">Maison Miroir</h1>
+        <h1 className="font-serif text-2xl uppercase tracking-wide text-[#111111]">Decoespejos</h1>
         <p className="text-sm text-[#8C8275]">{mensaje}</p>
         <Link href="/" className="inline-block text-xs uppercase tracking-widest text-[#111111] underline">
           Volver a la colección

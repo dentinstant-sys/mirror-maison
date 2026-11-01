@@ -10,7 +10,7 @@ export default function PoliticaDatosPage() {
         {/* ENCABEZADO */}
         <header className="border-b border-[#EAE7E1] pb-8 space-y-2">
           <span className="text-[10px] font-sans tracking-[0.3em] uppercase text-[#8C8275] font-medium block">
-            MAISON MIROIR
+           DECOESPEJOS
           </span>
           <h1 className="font-serif text-3xl md:text-4xl text-[#111111] uppercase tracking-wide">
             Política de Tratamiento de Datos Personales
@@ -28,7 +28,7 @@ export default function PoliticaDatosPage() {
               1. Responsable del Tratamiento
             </h2>
             <p>
-              <strong>Maison Miroir</strong> es la responsable del tratamiento de los datos personales que recoge en su sitio web. Esta política cumple cabalmente con la Ley 1581 de 2012, el Decreto 1377 de 2013 y las normas complementarias sobre protección de datos en Colombia. Al marcar la casilla &quot;Autorizo el tratamiento de mis datos&quot; en la página de pago, o al interactuar con nuestros canales y formularios, autorizas expresamente este tratamiento.
+              <strong>Decoespejos</strong> es la responsable del tratamiento de los datos personales que recoge en su sitio web. Esta política cumple cabalmente con la Ley 1581 de 2012, el Decreto 1377 de 2013 y las normas complementarias sobre protección de datos en Colombia. Al marcar la casilla &quot;Autorizo el tratamiento de mis datos&quot; en la página de pago, o al interactuar con nuestros canales y formularios, autorizas expresamente este tratamiento.
             </p>
           </section>
 
@@ -39,7 +39,7 @@ export default function PoliticaDatosPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li><strong>Al comprar:</strong> Nombre y apellido, celular, correo electrónico, departamento, ciudad, dirección e indicaciones de entrega, así como los detalles de las piezas seleccionadas y los registros de tus aceptaciones legales.</li>
               <li><strong>Al cotizar o contactarnos:</strong> La información provista en nuestros canales de atención o formularios (nombre, celular, requerimientos o fotografías).</li>
-              <li><strong>Procesamiento de pagos:</strong> Las transacciones se procesan a través de la pasarela segura de Bold. Maison Miroir no recopila ni almacena información financiera ni datos sensibles de tarjetas de crédito o cuentas bancarias.</li>
+              <li><strong>Procesamiento de pagos:</strong> Las transacciones se procesan a través de la pasarela segura de Bold. Decoespejos no recopila ni almacena información financiera ni datos sensibles de tarjetas de crédito o cuentas bancarias.</li>
             </ul>
           </section>
 

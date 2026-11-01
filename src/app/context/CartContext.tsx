@@ -31,7 +31,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // 1. Cargar desde localStorage ÚNICAMENTE al montar el componente
   useEffect(() => {
     try {
-     const saved = localStorage.getItem('maison_miroir_cart');
+     const saved = localStorage.getItem('decoespejos_cart');
       if (saved) {
         setCart(JSON.parse(saved));
       }
@@ -45,7 +45,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // 2. Guardar en localStorage solo DESPUÉS de haber leído los datos iniciales
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('maison_miroir_cart', JSON.stringify(cart));
+      localStorage.setItem('decoespejos_cart', JSON.stringify(cart));
     }
   }, [cart, isLoaded]);
 

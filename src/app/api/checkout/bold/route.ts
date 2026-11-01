@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         'x-api-key': apiKey,
       },
       body: JSON.stringify({
-        description: `Compra Maison Miroir - ${cliente?.nombreApellido || 'Cliente'}`,
+        description: `Compra Decoespejos - ${cliente?.nombreApellido || 'Cliente'}`,
         reference: reference,
         amount: amount,
         currency: currency,

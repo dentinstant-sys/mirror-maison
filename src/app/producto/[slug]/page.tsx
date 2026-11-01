@@ -13,6 +13,8 @@ interface EspejoProducto {
   categoria: string;
   subcategoria?: string;
   precio: number;
+  precioAnterior?: number; // Añadido para el precio de oferta
+  badgePromo?: string;     // Añadido para la insignia de oferta
   descripcion?: string;
   imagen: string;
   imagenes?: string[];
@@ -27,6 +29,19 @@ interface EspejoProducto {
   };
 }
 
+interface PromocionMes {
+  activo: boolean;
+  badge: string;
+  titulo: string;
+  subtitulo: string;
+  descripcion: string;
+  precioActual: number;
+  precioAnterior: number;
+  ahorro: string;
+  imagen: string;
+  link: string;
+}
+
 export default function DetalleProductoPage({
   params,
 }: {
@@ -35,9 +50,8 @@ export default function DetalleProductoPage({
   const resolvedParams = use(params);
   const slug = resolvedParams?.slug;
 
-
   const [paginaRelacionados, setPaginaRelacionados] = useState(1);
-const porPaginaRelacionados = 9; // 6 o 9 elementos por página
+  const porPaginaRelacionados = 9;
 
   const [producto, setProducto] = useState<EspejoProducto | null>(null);
   const [productosRelacionados, setProductosRelacionados] = useState<EspejoProducto[]>([]);
@@ -54,20 +68,47 @@ const porPaginaRelacionados = 9; // 6 o 9 elementos por página
       try {
         setCargando(true);
         
-        // 1. Obtener el producto actual
+        // 1. Obtener la Promoción del Mes actual desde Firestore
+        let promoData: PromocionMes | null = null;
+        try {
+          const promoDocRef = doc(db, 'configuracion', 'promocion');
+          const promoSnap = await getDoc(promoDocRef);
+          if (promoSnap.exists()) {
+            promoData = promoSnap.data() as PromocionMes;
+          }
+        } catch (err) {
+          console.error('Error al cargar la promo:', err);
+        }
+
+        // 2. Obtener el producto actual
         const docRef = doc(db, 'productos', slug);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();
+          let precioFinal = Number(data.precio) || 0;
+          let precioAnteriorFinal: number | undefined = undefined;
+          let badgeFinal = '';
+
+          // Verificar si este producto es el que está en la promoción del mes activa
+          const esPromoActiva = promoData?.activo && promoData?.link === `/producto/${slug}`;
+          
+          if (esPromoActiva && promoData) {
+            precioFinal = Number(promoData.precioActual) || precioFinal;
+            precioAnteriorFinal = Number(promoData.precioAnterior) > precioFinal ? Number(promoData.precioAnterior) : undefined;
+            badgeFinal = promoData.badge || '';
+          }
+
           const espejoData: EspejoProducto = {
             id: docSnap.id,
             nombre: data.nombre || 'Espejo de Colección',
             categoria: data.categoria || 'organicos',
             subcategoria: data.subcategoria || '',
-            precio: Number(data.precio) || 0,
+            precio: precioFinal,
+            precioAnterior: precioAnteriorFinal,
+            badgePromo: badgeFinal,
             descripcion: data.descripcion || '',
-            imagen: data.imagen || '',
+            imagen: esPromoActiva && promoData?.imagen ? promoData.imagen : (data.imagen || ''),
             imagenes: data.imagenes && data.imagenes.length > 0 ? data.imagenes : [data.imagen],
             medidas: data.medidas || {},
             materiales: data.materiales || {},
@@ -77,13 +118,12 @@ const porPaginaRelacionados = 9; // 6 o 9 elementos por página
           setProducto(espejoData);
           setImagenSeleccionada(espejoData.imagen);
 
-          // 2. Obtener productos relacionados ("Te puede interesar")
+          // 3. Obtener productos relacionados ("Te puede interesar")
           const q = query(collection(db, 'productos'), limit(10));
           const querySnapshot = await getDocs(q);
           const lista: EspejoProducto[] = [];
           
           querySnapshot.forEach((docItem) => {
-            // Excluimos el producto actual de la lista de recomendados
             if (docItem.id !== slug) {
               const d = docItem.data();
               lista.push({
@@ -185,16 +225,33 @@ const porPaginaRelacionados = 9; // 6 o 9 elementos por página
         <div className="lg:col-span-5 flex flex-col justify-between space-y-8">
           <div className="space-y-6">
             
-            <div className="space-y-2 border-b border-[#EAE7E1] pb-6">
+            <div className="space-y-3 border-b border-[#EAE7E1] pb-6">
+              {/* Insignia de promoción si está activa */}
+              {producto.badgePromo && (
+                <span className="inline-block bg-[#111111] text-[#FAF9F6] text-[10px] uppercase tracking-[0.2em] px-3 py-1 font-semibold rounded-full">
+                  {producto.badgePromo}
+                </span>
+              )}
+
               <span className="text-[10px] uppercase tracking-[0.3em] text-[#8C8275] block">
                 {producto.subcategoria || producto.categoria}
               </span>
+              
               <h1 className="font-serif text-2xl md:text-3xl text-[#111111] tracking-wide uppercase font-medium">
                 {producto.nombre}
               </h1>
-              <p className="text-lg font-semibold text-[#111111] pt-2">
-                ${producto.precio.toLocaleString('es-CO')} COP
-              </p>
+
+              {/* PRECIOS DINÁMICOS (OFERTA / NORMAL) */}
+              <div className="flex items-baseline gap-3 pt-2">
+                <span className="text-2xl font-semibold text-[#111111]">
+                  ${producto.precio.toLocaleString('es-CO')} <span className="text-xs font-normal text-[#8C8275]">COP</span>
+                </span>
+                {producto.precioAnterior && producto.precioAnterior > producto.precio && (
+                  <span className="text-sm text-[#8C8275] line-through">
+                    ${producto.precioAnterior.toLocaleString('es-CO')} COP
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-4 text-xs text-[#2D2D2D] font-light leading-relaxed">
@@ -244,100 +301,98 @@ const porPaginaRelacionados = 9; // 6 o 9 elementos por página
 
       </div>
 
- {/* SECCIÓN: TE PUEDE INTERESAR (CUADRÍCULA CON PAGINACIÓN) */}
-{productosRelacionados.length > 0 && (() => {
-  const totalPaginasRelacionados = Math.ceil(productosRelacionados.length / porPaginaRelacionados);
-  const inicio = (paginaRelacionados - 1) * porPaginaRelacionados;
-  const itemsVisibles = productosRelacionados.slice(inicio, inicio + porPaginaRelacionados);
+      {/* SECCIÓN: TE PUEDE INTERESAR */}
+      {productosRelacionados.length > 0 && (() => {
+        const totalPaginasRelacionados = Math.ceil(productosRelacionados.length / porPaginaRelacionados);
+        const inicio = (paginaRelacionados - 1) * porPaginaRelacionados;
+        const itemsVisibles = productosRelacionados.slice(inicio, inicio + porPaginaRelacionados);
 
-  return (
-    <section className="max-w-7xl mx-auto px-6 mt-28 pt-12 border-t border-[#EAE7E1] space-y-12">
-      <h2 className="text-xs uppercase tracking-[0.25em] font-medium text-[#111111]">
-        Te puede interesar
-      </h2>
+        return (
+          <section className="max-w-7xl mx-auto px-6 mt-28 pt-12 border-t border-[#EAE7E1] space-y-12">
+            <h2 className="text-xs uppercase tracking-[0.25em] font-medium text-[#111111]">
+              Te puede interesar
+            </h2>
 
-      {/* Grid de productos relacionados */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-        {itemsVisibles.map((item) => {
-          const medidaTexto = item.medidas?.alto && item.medidas?.ancho 
-            ? `${item.medidas.alto} x ${item.medidas.ancho}` 
-            : '';
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              {itemsVisibles.map((item) => {
+                const medidaTexto = item.medidas?.alto && item.medidas?.ancho 
+                  ? `${item.medidas.alto} x ${item.medidas.ancho}` 
+                  : '';
 
-          return (
-            <Link
-              key={item.id}
-              href={`/producto/${item.id}`}
-              className="group flex flex-col space-y-4 cursor-pointer"
-            >
-              <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
-                <Image
-                  src={item.imagen}
-                  alt={item.nombre}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-              </div>
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/producto/${item.id}`}
+                    className="group flex flex-col space-y-4 cursor-pointer"
+                  >
+                    <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
+                      <Image
+                        src={item.imagen}
+                        alt={item.nombre}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      />
+                    </div>
 
-              <div className="space-y-1">
-                {medidaTexto && (
-                  <span className="text-[10px] uppercase tracking-widest text-[#8C8275] block">
-                    {medidaTexto}
-                  </span>
-                )}
-                <h3 className="font-serif text-base text-[#111111] group-hover:text-[#8C8275] transition-colors uppercase">
-                  {item.nombre}
-                </h3>
-                <p className="text-sm font-semibold text-[#111111] pt-1">
-                  ${item.precio.toLocaleString('es-CO')} COP
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+                    <div className="space-y-1">
+                      {medidaTexto && (
+                        <span className="text-[10px] uppercase tracking-widest text-[#8C8275] block">
+                          {medidaTexto}
+                        </span>
+                      )}
+                      <h3 className="font-serif text-base text-[#111111] group-hover:text-[#8C8275] transition-colors uppercase">
+                        {item.nombre}
+                      </h3>
+                      <p className="text-sm font-semibold text-[#111111] pt-1">
+                        ${item.precio.toLocaleString('es-CO')} COP
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
 
-      {/* Paginación de Relacionados */}
-      {totalPaginasRelacionados > 1 && (
-        <div className="flex items-center justify-center gap-4 pt-8 border-t border-[#EAE7E1]">
-          <button
-            onClick={() => setPaginaRelacionados((prev) => Math.max(prev - 1, 1))}
-            disabled={paginaRelacionados === 1}
-            className="text-xs uppercase tracking-widest font-medium transition-colors hover:text-[#8C8275] disabled:opacity-30 disabled:hover:text-[#111111] disabled:cursor-not-allowed cursor-pointer px-3 py-1"
-          >
-            ← Anterior
-          </button>
-
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalPaginasRelacionados }, (_, index) => {
-              const numPagina = index + 1;
-              return (
+            {totalPaginasRelacionados > 1 && (
+              <div className="flex items-center justify-center gap-4 pt-8 border-t border-[#EAE7E1]">
                 <button
-                  key={numPagina}
-                  onClick={() => setPaginaRelacionados(numPagina)}
-                  className={`w-8 h-8 text-xs font-medium transition-all cursor-pointer flex items-center justify-center rounded-full ${
-                    paginaRelacionados === numPagina
-                      ? 'bg-[#111111] text-[#FAF9F6]'
-                      : 'text-[#111111] hover:bg-[#EAE7E1]'
-                  }`}
+                  onClick={() => setPaginaRelacionados((prev) => Math.max(prev - 1, 1))}
+                  disabled={paginaRelacionados === 1}
+                  className="text-xs uppercase tracking-widest font-medium transition-colors hover:text-[#8C8275] disabled:opacity-30 disabled:hover:text-[#111111] disabled:cursor-not-allowed cursor-pointer px-3 py-1"
                 >
-                  {numPagina}
+                  ← Anterior
                 </button>
-              );
-            })}
-          </div>
 
-          <button
-            onClick={() => setPaginaRelacionados((prev) => Math.min(prev + 1, totalPaginasRelacionados))}
-            disabled={paginaRelacionados === totalPaginasRelacionados}
-            className="text-xs uppercase tracking-widest font-medium transition-colors hover:text-[#8C8275] disabled:opacity-30 disabled:hover:text-[#111111] disabled:cursor-not-allowed cursor-pointer px-3 py-1"
-          >
-            Siguiente →
-          </button>
-        </div>
-      )}
-    </section>
-  );
-})()}
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPaginasRelacionados }, (_, index) => {
+                    const numPagina = index + 1;
+                    return (
+                      <button
+                        key={numPagina}
+                        onClick={() => setPaginaRelacionados(numPagina)}
+                        className={`w-8 h-8 text-xs font-medium transition-all cursor-pointer flex items-center justify-center rounded-full ${
+                          paginaRelacionados === numPagina
+                            ? 'bg-[#111111] text-[#FAF9F6]'
+                            : 'text-[#111111] hover:bg-[#EAE7E1]'
+                        }`}
+                      >
+                        {numPagina}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setPaginaRelacionados((prev) => Math.min(prev + 1, totalPaginasRelacionados))}
+                  disabled={paginaRelacionados === totalPaginasRelacionados}
+                  className="text-xs uppercase tracking-widest font-medium transition-colors hover:text-[#8C8275] disabled:opacity-30 disabled:hover:text-[#111111] disabled:cursor-not-allowed cursor-pointer px-3 py-1"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
+          </section>
+        );
+      })()}
 
       {/* DRAWER LATERAL */}
       {drawerAbierto && (

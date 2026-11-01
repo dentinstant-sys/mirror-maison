@@ -130,7 +130,7 @@ export default function AMedidaPage() {
         creadoEn: serverTimestamp(),
       });
 
-      const mensaje = `Hola *Acomódate Muebles*, quiero cotizar un diseño personalizado:%0A%0A🛋️ *Mueble:* ${tipoSeleccionado} (${estiloSeleccionado})%0A📏 *Medidas:* ${ancho}x${fondo}x${alto} cm%0A🧶 🧶 *Materiales:* Tela: ${telaSeleccionada || 'N/A'}, Madera: ${maderaSeleccionada || 'N/A'} (Color: ${colorSeleccionado}) (${colorSeleccionado})%0A🪵 *Acabados:* Patas ${pataSeleccionada}, Costuras ${costuraSeleccionada}%0A💬 *Idea:* ${detallesIdea || 'N/A'}%0A👤 *Cliente:* ${nombre} (${ciudad}) - Tel: ${celular}`;
+      const mensaje = `Hola *Decoespejos*, quiero cotizar un diseño personalizado:%0A%0A🛋️ *Mueble:* ${tipoSeleccionado} (${estiloSeleccionado})%0A📏 *Medidas:* ${ancho}x${fondo}x${alto} cm%0A🧶 🧶 *Materiales:* Tela: ${telaSeleccionada || 'N/A'}, Madera: ${maderaSeleccionada || 'N/A'} (Color: ${colorSeleccionado}) (${colorSeleccionado})%0A🪵 *Acabados:* Patas ${pataSeleccionada}, Costuras ${costuraSeleccionada}%0A💬 *Idea:* ${detallesIdea || 'N/A'}%0A👤 *Cliente:* ${nombre} (${ciudad}) - Tel: ${celular}`;
 
       window.open(`https://wa.me/message/D6QREGANQXL3O1${numeroWhatsApp}?text=${mensaje}`, '_blank');
       alert('¡Configuración enviada! Te hemos redirigido a WhatsApp.');

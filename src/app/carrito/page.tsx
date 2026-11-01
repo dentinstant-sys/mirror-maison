@@ -3,7 +3,9 @@
 import { useCart } from '@/app/context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const DEPARTAMENTOS_COLOMBIA = [
   'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar',
@@ -16,8 +18,26 @@ const DEPARTAMENTOS_COLOMBIA = [
 
 export default function CarritoPage() {
   const { cart, actualizarCantidad, removerDelCarrito, vaciarCarrito, totalCarrito } = useCart();
-  const [loading, setLoading] = useState(false);
+  const [loadingBold, setLoadingBold] = useState(false);
+  const [loadingWp, setLoadingWp] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [numeroWhatsapp, setNumeroWhatsapp] = useState<string>('');
+
+  // Cargar número de WhatsApp dinámico desde Firestore
+  useEffect(() => {
+    async function obtenerWhatsapp() {
+      try {
+        const docRef = doc(db, 'configuracion', 'redes');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().whatsapp) {
+          setNumeroWhatsapp(docSnap.data().whatsapp);
+        }
+      } catch (error) {
+        console.error('Error al cargar número de WhatsApp:', error);
+      }
+    }
+    obtenerWhatsapp();
+  }, []);
 
   // Estado del formulario de cliente y envío
   const [formData, setFormData] = useState({
@@ -49,16 +69,35 @@ export default function CarritoPage() {
     setModalOpen(true);
   };
 
+  const validarCheckboxes = () => {
+    if (!formData.aceptaTiempo || !formData.aceptaTerminos || !formData.aceptaTratamientoDatos || !formData.esMayorEdad) {
+      alert('Debes aceptar todos los términos y declaraciones antes de continuar.');
+      return false;
+    }
+    return true;
+  };
+
+  // 1. PAGO POR BOLD
   const handlePagarBold = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.aceptaTiempo || !formData.aceptaTerminos || !formData.aceptaTratamientoDatos || !formData.esMayorEdad) {
-      alert('Debes aceptar todos los términos y declaraciones antes de continuar con el pago.');
-      return;
-    }
+    if (!validarCheckboxes()) return;
 
     try {
-      setLoading(true);
+      setLoadingBold(true);
+
+      const orderId = `MM-${Date.now()}`;
+
+      // Guardar pedido en Firestore con fecha y hora
+      await addDoc(collection(db, 'pedidos'), {
+        orderId,
+        cliente: formData,
+        items: cart,
+        total: totalCarrito,
+        metodoPago: 'Bold',
+        estado: 'Pendiente',
+        fechaCreacion: serverTimestamp(),
+        fechaTexto: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
+      });
 
       const res = await fetch('/api/checkout/bold', {
         method: 'POST',
@@ -67,7 +106,7 @@ export default function CarritoPage() {
         },
         body: JSON.stringify({
           totalCarrito: totalCarrito,
-          orderId: `MM-${Date.now()}`,
+          orderId: orderId,
           cliente: formData,
           items: cart,
         }),
@@ -81,10 +120,70 @@ export default function CarritoPage() {
         alert(data.error || 'Ocurrió un error al generar la orden de pago.');
       }
     } catch (error) {
-      console.error('Error al iniciar el pago:', error);
+      console.error('Error al iniciar el pago con Bold:', error);
       alert('No se pudo conectar con el servidor de pagos.');
     } finally {
-      setLoading(false);
+      setLoadingBold(false);
+    }
+  };
+
+  // 2. PAGO POR WHATSAPP
+  const handlePagarWhatsApp = async () => {
+    if (!validarCheckboxes()) return;
+
+    if (!formData.nombreApellido || !formData.celular || !formData.departamento || !formData.ciudad || !formData.direccion) {
+      alert('Por favor completa los campos obligatorios del formulario antes de continuar.');
+      return;
+    }
+
+    try {
+      setLoadingWp(true);
+
+      const orderId = `MM-WP-${Date.now()}`;
+
+      // Guardar pedido en Firestore con fecha y hora
+      await addDoc(collection(db, 'pedidos'), {
+        orderId,
+        cliente: formData,
+        items: cart,
+        total: totalCarrito,
+        metodoPago: 'WhatsApp',
+        estado: 'Pendiente WhatsApp',
+        fechaCreacion: serverTimestamp(),
+        fechaTexto: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
+      });
+
+      // Construcción del mensaje formateado para WhatsApp
+      const listaProductos = cart
+        .map((item) => `• ${item.nombre} (x${item.cantidad}) - $${(item.precio * item.cantidad).toLocaleString('es-CO')} COP`)
+        .join('\n');
+
+      const mensaje = `Hola, vengo de la página web de Decoespejos. Quiero terminar de pagar mi pedido.\n\n` +
+        `*Número de Orden:* ${orderId}\n\n` +
+        `*CLIENTE:* ${formData.nombreApellido}\n` +
+        `*Celular:* ${formData.celular}\n` +
+        `*Correo:* ${formData.correo || 'No especificado'}\n\n` +
+        `*DIRECCIÓN DE ENTREGA:*\n` +
+        `*Ciudad / Depto:* ${formData.ciudad}, ${formData.departamento}\n` +
+        `*Dirección:* ${formData.direccion}\n` +
+        `*Indicaciones:* ${formData.indicaciones || 'Ninguna'}\n\n` +
+        `*PRODUCTOS SELECCIONADOS:*\n${listaProductos}\n\n` +
+        `*TOTAL A PAGAR:* $${totalCarrito.toLocaleString('es-CO')} COP`;
+
+      // Vaciar carrito local
+      vaciarCarrito();
+
+      // Redirigir a WhatsApp
+      const targetPhone = numeroWhatsapp || '573001234567'; // Número por defecto si no se ha configurado
+      const urlWp = `https://wa.me/${targetPhone}?text=${encodeURIComponent(mensaje)}`;
+      window.open(urlWp, '_blank');
+
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error al registrar pedido por WhatsApp:', error);
+      alert('Ocurrió un error al guardar tu pedido.');
+    } finally {
+      setLoadingWp(false);
     }
   };
 
@@ -96,7 +195,7 @@ export default function CarritoPage() {
         <header className="border-b border-[#EAE7E1] pb-8 flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
           <div>
             <span className="text-[10px] font-sans tracking-[0.3em] uppercase text-[#8C8275] font-medium block mb-2">
-              MAISON MIROIR
+              Decoespejos
             </span>
             <h1 className="font-serif text-3xl md:text-4xl text-[#111111] font-normal uppercase tracking-wide">
               Bolsa de Compra
@@ -376,91 +475,105 @@ export default function CarritoPage() {
                 </div>
               </div>
 
-            {/* Antes de pagar */}
-<div className="space-y-3 pt-2 bg-[#F2F0EB] p-4 rounded-xl border border-[#EAE7E1]">
-  <h4 className="font-semibold uppercase tracking-wider text-[#111111] mb-2">
-    Antes de pagar
-  </h4>
+              {/* Antes de pagar */}
+              <div className="space-y-3 pt-2 bg-[#F2F0EB] p-4 rounded-xl border border-[#EAE7E1]">
+                <h4 className="font-semibold uppercase tracking-wider text-[#111111] mb-2">
+                  Antes de pagar
+                </h4>
 
-  <label className="flex items-start gap-3 cursor-pointer">
-    <input
-      type="checkbox"
-      name="aceptaTiempo"
-      required
-      checked={formData.aceptaTiempo}
-      onChange={handleChange}
-      className="mt-0.5 accent-[#111111]"
-    />
-    <span>Entiendo y acepto que mi pedido llega en 15 días desde mi anticipo.</span>
-  </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="aceptaTiempo"
+                    required
+                    checked={formData.aceptaTiempo}
+                    onChange={handleChange}
+                    className="mt-0.5 accent-[#111111]"
+                  />
+                  <span>Entiendo y acepto que mi pedido llega en 15 días desde mi anticipo.</span>
+                </label>
 
-  <label className="flex items-start gap-3 cursor-pointer">
-    <input
-      type="checkbox"
-      name="aceptaTerminos"
-      required
-      checked={formData.aceptaTerminos}
-      onChange={handleChange}
-      className="mt-0.5 accent-[#111111]"
-    />
-    <span>
-      Leí y acepto los{' '}
-      <Link
-        href="/terminos-y-condiciones"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline font-semibold hover:text-[#8C8275] transition-colors"
-      >
-        términos y condiciones
-      </Link>
-      .
-    </span>
-  </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="aceptaTerminos"
+                    required
+                    checked={formData.aceptaTerminos}
+                    onChange={handleChange}
+                    className="mt-0.5 accent-[#111111]"
+                  />
+                  <span>
+                    Leí y acepto los{' '}
+                    <Link
+                      href="/terminos-y-condiciones"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-semibold hover:text-[#8C8275] transition-colors"
+                    >
+                      términos y condiciones
+                    </Link>
+                    .
+                  </span>
+                </label>
 
-  <label className="flex items-start gap-3 cursor-pointer">
-    <input
-      type="checkbox"
-      name="aceptaTratamientoDatos"
-      required
-      checked={formData.aceptaTratamientoDatos}
-      onChange={handleChange}
-      className="mt-0.5 accent-[#111111]"
-    />
-    <span>
-      Autorizo el tratamiento de mis datos para gestionar mi pedido, según la{' '}
-      <Link
-        href="/politica-de-datos"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline font-semibold hover:text-[#8C8275] transition-colors"
-      >
-        política de datos personales
-      </Link>
-      .
-    </span>
-  </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="aceptaTratamientoDatos"
+                    required
+                    checked={formData.aceptaTratamientoDatos}
+                    onChange={handleChange}
+                    className="mt-0.5 accent-[#111111]"
+                  />
+                  <span>
+                    Autorizo el tratamiento de mis datos para gestionar mi pedido, según la{' '}
+                    <Link
+                      href="/politica-de-datos"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-semibold hover:text-[#8C8275] transition-colors"
+                    >
+                      política de datos personales
+                    </Link>
+                    .
+                  </span>
+                </label>
 
-  <label className="flex items-start gap-3 cursor-pointer">
-    <input
-      type="checkbox"
-      name="esMayorEdad"
-      required
-      checked={formData.esMayorEdad}
-      onChange={handleChange}
-      className="mt-0.5 accent-[#111111]"
-    />
-    <span>Soy mayor de edad.</span>
-  </label>
-</div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="esMayorEdad"
+                    required
+                    checked={formData.esMayorEdad}
+                    onChange={handleChange}
+                    className="mt-0.5 accent-[#111111]"
+                  />
+                  <span>Soy mayor de edad.</span>
+                </label>
+              </div>
 
-              {/* BOTÓN FINAL DE PAGO */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#111111] text-[#FAF9F6] hover:bg-[#8C8275] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <span>{loading ? 'PROCESANDO PAGO...' : `PAGAR $${totalCarrito.toLocaleString('es-CO')} COP`}</span>
-              </button>
+              {/* BOTONES FINALES DE PAGO */}
+              <div className="space-y-3 pt-2">
+                {/* BOTÓN 1: PAGO CON TARJETA / BOLD */}
+                <button
+                  type="submit"
+                  disabled={loadingBold || loadingWp}
+                  className="w-full bg-[#111111] text-[#FAF9F6] hover:bg-[#8C8275] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span>{loadingBold ? 'PROCESANDO PAGO...' : `PAGAR $${totalCarrito.toLocaleString('es-CO')} COP CON BOLD`}</span>
+                </button>
+
+                {/* BOTÓN 2: PAGO / PEDIDO POR WHATSAPP */}
+                <button
+                  type="button"
+                  onClick={handlePagarWhatsApp}
+                  disabled={loadingBold || loadingWp}
+                  className="w-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-colors py-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold cursor-pointer shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span>📱</span>
+                  <span>{loadingWp ? 'REGISTRANDO PEDIDO...' : 'TERMINAR PAGO CON WHATSAPP'}</span>
+                </button>
+              </div>
 
             </form>
           </div>
