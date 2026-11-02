@@ -5,6 +5,7 @@ import { doc, getDoc, collection, getDocs, query, limit } from 'firebase/firesto
 import { useCart } from '@/app/context/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // <-- 1. Importar useRouter
 import { db } from '@/lib/firebase';
 
 interface EspejoProducto {
@@ -13,8 +14,8 @@ interface EspejoProducto {
   categoria: string;
   subcategoria?: string;
   precio: number;
-  precioAnterior?: number; // Añadido para el precio de oferta
-  badgePromo?: string;     // Añadido para la insignia de oferta
+  precioAnterior?: number; 
+  badgePromo?: string;     
   descripcion?: string;
   imagen: string;
   imagenes?: string[];
@@ -50,6 +51,8 @@ export default function DetalleProductoPage({
   const resolvedParams = use(params);
   const slug = resolvedParams?.slug;
 
+  const router = useRouter(); // <-- 2. Inicializar el router
+
   const [paginaRelacionados, setPaginaRelacionados] = useState(1);
   const porPaginaRelacionados = 9;
 
@@ -68,7 +71,6 @@ export default function DetalleProductoPage({
       try {
         setCargando(true);
         
-        // 1. Obtener la Promoción del Mes actual desde Firestore
         let promoData: PromocionMes | null = null;
         try {
           const promoDocRef = doc(db, 'configuracion', 'promocion');
@@ -80,7 +82,6 @@ export default function DetalleProductoPage({
           console.error('Error al cargar la promo:', err);
         }
 
-        // 2. Obtener el producto actual
         const docRef = doc(db, 'productos', slug);
         const docSnap = await getDoc(docRef);
 
@@ -90,7 +91,6 @@ export default function DetalleProductoPage({
           let precioAnteriorFinal: number | undefined = undefined;
           let badgeFinal = '';
 
-          // Verificar si este producto es el que está en la promoción del mes activa
           const esPromoActiva = promoData?.activo && promoData?.link === `/producto/${slug}`;
           
           if (esPromoActiva && promoData) {
@@ -118,7 +118,6 @@ export default function DetalleProductoPage({
           setProducto(espejoData);
           setImagenSeleccionada(espejoData.imagen);
 
-          // 3. Obtener productos relacionados ("Te puede interesar")
           const q = query(collection(db, 'productos'), limit(10));
           const querySnapshot = await getDocs(q);
           const lista: EspejoProducto[] = [];
@@ -226,7 +225,6 @@ export default function DetalleProductoPage({
           <div className="space-y-6">
             
             <div className="space-y-3 border-b border-[#EAE7E1] pb-6">
-              {/* Insignia de promoción si está activa */}
               {producto.badgePromo && (
                 <span className="inline-block bg-[#111111] text-[#FAF9F6] text-[10px] uppercase tracking-[0.2em] px-3 py-1 font-semibold rounded-full">
                   {producto.badgePromo}
@@ -241,7 +239,6 @@ export default function DetalleProductoPage({
                 {producto.nombre}
               </h1>
 
-              {/* PRECIOS DINÁMICOS (OFERTA / NORMAL) */}
               <div className="flex items-baseline gap-3 pt-2">
                 <span className="text-2xl font-semibold text-[#111111]">
                   ${producto.precio.toLocaleString('es-CO')} <span className="text-xs font-normal text-[#8C8275]">COP</span>
@@ -258,7 +255,7 @@ export default function DetalleProductoPage({
               <p>{producto.descripcion || 'Pieza escultórica con reflejo de alta definición y marco artesanal de fina terminación.'}</p>
             </div>
 
-            {/* BOTÓN AÑADIR AL CARRITO */}
+            {/* BOTONES DE COMPRA */}
             <div className="pt-4 space-y-3">
               <button
                 onClick={() =>
@@ -272,6 +269,22 @@ export default function DetalleProductoPage({
                 className="w-full bg-[#111111] text-[#FAF9F6] py-4 text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#8C8275] transition-colors cursor-pointer"
               >
                 Añadir a la Cesta
+              </button>
+
+              {/* NUEVO BOTÓN: COMPRAR YA */}
+              <button
+                onClick={() => {
+                  agregarAlCarrito({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    imagen: producto.imagen,
+                  });
+                  router.push('/carrito'); // Cambia '/carrito' si tu ruta es distinta (ej. '/checkout')
+                }}
+                className="w-full border border-[#111111] text-[#111111] py-4 text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#111111] hover:text-[#FAF9F6] transition-colors cursor-pointer"
+              >
+                Comprar Ya
               </button>
             </div>
 

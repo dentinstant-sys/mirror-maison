@@ -35,13 +35,25 @@ export default function Navbar() {
         {/* ACCIONES (CARRITO Y MENÚ MÓVIL) */}
         <div className="flex items-center gap-6">
           
-          {/* 🛒 ENLACE DIRECTO A LA PÁGINA DEL CARRITO */}
+          {/* 🛒 ICONO DE CARRITO Y CONTADOR */}
           <Link
             href="/carrito"
-            className="relative flex items-center gap-2 text-xs uppercase tracking-widest text-[#111111] font-medium cursor-pointer hover:text-[#8C8275] transition-colors"
+            className="relative flex items-center gap-2 text-[#111111] font-medium cursor-pointer hover:text-[#8C8275] transition-colors"
             aria-label="Ver carrito"
           >
-            <span>CARRITO</span>
+            {/* Icono SVG de Bolsa de Compras */}
+            <svg 
+              className="w-5 h-5 stroke-[1.5]" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" 
+              />
+            </svg>
             <span className="bg-[#111111] text-[#FAF9F6] text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-sans">
               {totalItems}
             </span>
@@ -53,8 +65,8 @@ export default function Navbar() {
             className="lg:hidden text-[#111111] focus:outline-none cursor-pointer"
             aria-label="Abrir menú"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            <svg className="w-6 h-6 stroke-[1.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
             </svg>
           </button>
         </div>
@@ -65,12 +77,14 @@ export default function Navbar() {
       {isOpen && (
         <div className="lg:hidden bg-[#FAF9F6] border-b border-[#EAE7E1] px-6 py-6 space-y-4 text-xs uppercase tracking-[0.2em] text-[#2D2D2D]">
           <Link href="/categoria/organicos" onClick={() => setIsOpen(false)} className="block py-2">Espejos Orgánicos</Link>
-          <Link href="/categoria/arqueados" onClick={() => setIsOpen(false)} className="block py-2">Espejos Arqueados</Link>
-          <Link href="/categoria/pie" onClick={() => setIsOpen(false)} className="block py-2">Espejos de Pie</Link>
+          <Link href="/categoria/arqueados" onClick={() => setIsOpen(false)} className="block py-2">Espejos Arqueados</Link><Link href="/categoria/pie" onClick={() => setIsOpen(false)} className="block py-2">Espejos de Pie</Link>
           <Link href="/categoria/pared" onClick={() => setIsOpen(false)} className="block py-2">Espejos de Pared</Link>
           <div className="pt-2 border-t border-[#EAE7E1]">
-            <Link href="/carrito" onClick={() => setIsOpen(false)} className="block py-2 font-semibold">
-              Ver Carrito ({totalItems})
+            <Link href="/carrito" onClick={() => setIsOpen(false)} className="flex items-center gap-2 py-2 font-semibold">
+              <svg className="w-4 h-4 stroke-[1.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span>Ver Carrito ({totalItems})</span>
             </Link>
           </div>
         </div>
