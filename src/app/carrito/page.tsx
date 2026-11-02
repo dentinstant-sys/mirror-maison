@@ -77,6 +77,26 @@ export default function CarritoPage() {
     return true;
   };
 
+  // Función auxiliar para notificar al panel administrativo
+  const enviarNotificacionPush = async (orderId: string) => {
+    try {
+      const response = await fetch('/api/notificar-pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          nombreCliente: formData.nombreApellido,
+          total: totalCarrito,
+        }),
+      });
+
+      const resData = await response.json();
+      console.log('Respuesta de /api/notificar-pedido:', resData);
+    } catch (err) {
+      console.error('Error al enviar la notificación push:', err);
+    }
+  };
+
   // 1. PAGO POR BOLD
   const handlePagarBold = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +118,9 @@ export default function CarritoPage() {
         fechaCreacion: serverTimestamp(),
         fechaTexto: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
       });
+
+      // 🔔 Disparar notificación push al admin
+      await enviarNotificacionPush(orderId);
 
       const res = await fetch('/api/checkout/bold', {
         method: 'POST',
@@ -152,6 +175,9 @@ export default function CarritoPage() {
         fechaCreacion: serverTimestamp(),
         fechaTexto: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }),
       });
+
+      // 🔔 Disparar notificación push al admin
+      await enviarNotificacionPush(orderId);
 
       // Construcción del mensaje formateado para WhatsApp
       const listaProductos = cart
