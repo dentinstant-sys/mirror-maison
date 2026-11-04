@@ -124,11 +124,11 @@ export default function HomePage() {
               {/* Columna Derecha: Detalles, Precios y Botón */}
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="bg-[#111111] text-[#FAF9F6] text-[10px] uppercase tracking-[0.2em] px-3 py-1 font-semibold rounded-full">
+                  <span className="bg-[#111111] text-[#FAF9F6] text-[18px] uppercase tracking-[0.2em] px-3 py-1 font-semibold rounded-full">
                     {promo.badge || "OFERTA ESPECIAL"}
                   </span>
                   {promo.ahorro && (
-                    <span className="bg-[#C25E38]/10 text-[#C25E38] border border-[#C25E38]/20 text-[10px] uppercase tracking-[0.1em] px-3 py-1 font-medium rounded-full">
+                    <span className="bg-[#C25E38]/10 text-[#C25E38] border border-[#C25E38]/20 text-[18px] uppercase tracking-[0.1em] px-3 py-1 font-medium rounded-full">
                       {promo.ahorro}
                     </span>
                   )}
@@ -147,11 +147,11 @@ export default function HomePage() {
                 </p>
 
                 <div className="flex items-baseline gap-3 pt-1">
-                  <span className="text-xl font-serif font-semibold text-[#111111]">
+                  <span className=" font-serif font-semibold text-[#111111] text-[27px]" >
                     ${promo.precioActual?.toLocaleString('es-CO')} <span className="text-[10px] font-sans font-normal text-[#8C8275]">COP</span>
                   </span>
                   {promo.precioAnterior > promo.precioActual && (
-                    <span className="text-xs text-[#8C8275] line-through">
+                    <span className="text-[27px] text-[#8C8275] line-through">
                       ${promo.precioAnterior?.toLocaleString('es-CO')}
                     </span>
                   )}
