@@ -272,7 +272,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
               {productosPaginados.map((espejo) => (
                 <Link key={espejo.id} href={`/producto/${espejo.id}`} className="group space-y-4">
                   <div className="relative aspect-[3/4] bg-[#F2F0EB] overflow-hidden">
